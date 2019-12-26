@@ -1,0 +1,269 @@
+"use strict";
+
+/**
+* @module LeadControlador
+* @author Sergio Ponce
+* @description Funciones que hacen funcionar el formulario.
+*/
+
+var LeadControlador = function(config) {
+
+  var configLead = {};
+  var comentario = '';
+  var config = {
+    onError: null,
+    onSucces: null,
+    onBlur: null,
+    onFocus: null,
+    botonIni: null,
+    botonMid: null,
+    botonEnd: null,
+    botonEndError: null
+  };
+
+  this.setInicial = function(obj) {
+    if(obj.idEmpresa) {configLead.idEmpresa = obj.idEmpresa}
+    if(obj.idUsuario) {configLead.idUsuario = obj.idUsuario}
+    if(obj.nombre) {configLead.nombre = obj.nombre}
+    if(obj.origen) {configLead.origen = obj.origen}
+    if(obj.etiqueta) {configLead.etiqueta = obj.etiqueta}
+    if(obj.etiqueta1) {configLead.etiqueta1 = obj.etiqueta1}
+    if(obj.etiqueta2) {configLead.etiqueta2 = obj.etiqueta2}
+    if(obj.telefono) {configLead.telefono = obj.telefono}
+    if(obj.comentarios) {
+      comentario = obj.comentarios;
+      configLead.comentarios = obj.comentarios;
+    }
+  }; /* setInicial */
+
+  this.setOnError = function(onError) {
+    if(typeof(onError) === 'function') {
+      config.onError = onError;
+    } else {
+      console.log("onError no es una funcion.");
+    }
+  }; /* setOnError */
+
+  this.setOnSucces = function(onSucces) {
+    if(typeof(onSucces) === 'function') {
+      config.onSucces = onSucces;
+    } else {
+      console.log("onSucces no es una funcion.");
+    }
+  }; /* setOnSucces */
+
+  this.setOnBlur = function(onBlur) {
+    if(typeof(onBlur) === 'function') {
+      config.onBlur = onBlur;
+    } else {
+      console.log("onBlur no es una funcion.");
+    }
+  }; /* setOnBlur */
+
+  this.setOnFocus = function(onFocus) {
+    if(typeof(onFocus) === 'function') {
+      config.onFocus = onFocus;
+    } else {
+      console.log("onFocus no es una funcion.");
+    }
+  }; /* setOnFocus */
+
+  this.setBotonIni = function(botonIni) {
+    if(typeof(botonIni) === 'function') {
+      config.botonIni = botonIni;
+    } else {
+      console.log("botonIni no es una funcion.");
+    }
+  }; /* setBotonIni */
+
+  this.setBotonMid = function(botonMid) {
+    if(typeof(botonMid) === 'function') {
+      config.botonMid = botonMid;
+    } else {
+      console.log("botonMid no es una funcion.");
+    }
+  }; /* setBotonMid */
+
+  this.setBotonEnd = function(botonEnd) {
+    if(botonEnd) {
+      if(typeof(botonEnd) === 'function') {
+        config.botonEnd = botonEnd;
+      } else if(typeof(botonEnd) === 'string') {
+        config.botonEnd = function() {
+          window.location.href = botonEnd;
+        };
+      } else {
+        console.log("botonEnd no es funcion ni string.");
+      }
+    }
+  }; /* setBotonEnd */
+
+  this.setBotonEndError = function(botonEndError) {
+    if(typeof(botonEndError) === 'function') {
+      config.botonEndError = botonEndError;
+    } else {
+      console.log("botonEndError no es una funcion.");
+    }
+  }; /* setBotonEndError */
+
+  this.onFocus = function(input) {
+    if(config.onFocus) {
+      var $input = $(input);
+      config.onFocus($input);
+    } else {
+      return null;
+    }
+  }; /* onFocus */
+
+  this.onBlur = function(input) {
+    if(config.onBlur) {
+      var $input = $(input);
+      config.onBlur($input);
+    } else {
+      return null;
+    }
+  }; /* onBlur */
+
+  this.buttonOnClick = function(boton) {
+    var $boton = $(boton);
+    var $form = $('#leadForm');
+
+    if ($form.length === 1 ) {
+      if(config.botonIni) {
+        config.botonIni($boton, $form);
+      }
+      var valido = recolectarDatos($form);
+      if(valido) {
+        if(config.botonMid) {
+          config.botonMid(valido, configLead, $boton, $form);
+        }
+        preparaDatos($boton, $form);
+      } else {
+        console.log('Datos incorrectos');
+        if(config.botonMid) {
+          config.botonMid(valido, configLead, $boton, $form);
+        }
+      }
+    } else {
+      console.log('El formulario no existe');
+    }
+
+  }; /* buttonOnClick */
+
+  this.guardaDatosLeadLs = function(configLead) {
+    var data = {};
+    var propsArr = ['nombre', 'correo', 'puesto', 'telefono', 'empresa'];
+    if(localStorage.leadDt) {
+      data = JSON.parse(localStorage.leadDt);
+    }
+    for( var i = 0; i <  propsArr.length; i++) {
+      if(configLead[propsArr[i]]) {
+        data[propsArr[i]] = configLead[propsArr[i]];
+      }
+    }
+    localStorage.setItem('leadDt', JSON.stringify(data));
+  }; /* guardaDatosLeadLs */
+
+  var recolectarDatos = function($form) {
+    var arrInputs = $form.find('input');
+    var arrSelect = $form.find('select');
+    var arrText   = $form.find('textarea');
+    var inputs = leerArray(arrInputs);
+    var selects = leerArray(arrSelect);
+    var textArea = leerArray(arrText);
+    return inputs && selects && textArea;
+  }; /* recolectarDatos */
+
+  var leerArray = function(arr) {
+    var todoValido = true;
+    if(arr.length > 0) {
+      for (var i = 0; i < arr.length; i++) {
+        var $input = $(arr[i]);
+        if(!validaInput($input)) {todoValido = false;}
+      }
+    }
+    return todoValido;
+  };  /* leerArray */
+
+  var validaInput = function($input) {
+    var tipo = $input.attr('data-tipo');
+    var name = $input.attr('name');
+    var value = $input.val();
+    var valido = fnLead.validaCampo({ tipo: tipo, valor: value });
+    if(valido) {
+      if(config.onSucces) {
+        config.onSucces($input);
+      }
+      asignaDato(name, value);
+    } else {
+      if(config.onError) {
+        config.onError($input);
+      }
+    }
+    return valido;
+  }; /* validaInput */
+
+  var asignaDato = function(name, value) { // Ver que mover aquí para que funcionen los comentarios
+    switch (name) {
+      case 'NOMBRE':
+        configLead.nombre = value;
+        break;
+      case 'TELEFONO':
+        configLead.telefono = fn.depurarTelefono(value);;
+        break;
+      case 'EMAIL':
+        configLead.correo = $.trim(value);
+        break;
+      case 'PUESTO':
+        configLead.puesto = $.trim(value);
+        break;
+      case 'EMPRESA':
+        configLead.empresa = $.trim(value);
+        break;
+      case 'COMENTARIOS':
+        configLead.comentarios = comentario + $.trim(value);
+        break;
+    }
+  }; /* asignaDato */
+
+  var preparaDatos = function($boton, $form) {
+
+    var finEnviaDatos = function(res, err) {
+      if(err) {
+        if(config.botonEndError) {
+          config.botonEndError(res, err, $boton, $form);
+        }
+      } else {
+        if(config.botonEnd) {
+          config.botonEnd(res, err, $boton, $form);
+        }
+      }
+    };
+    /*************************************/
+    var enviaDatos = function(res, err) {
+      if(err) {
+        configLead.nombre = $.trim(configLead.nombre.capitalize());
+        fnLead.setDatosLead(configLead);
+        fnLead.WSguardaProspecto(finEnviaDatos);
+        return null;
+      }
+      configLead.nombre = $.trim(res.jsonDatos[0].nombre.capitalize());
+      if(res.jsonDatos[0].apellidos) {
+        configLead.apellidos = $.trim(res.jsonDatos[0].apellidos.capitalize());
+      }
+      fnLead.setDatosLead(configLead);
+      fnLead.WSguardaProspecto(finEnviaDatos);
+    };
+    /*************************************/
+    if(configLead.nombre && configLead.nombre != '.') {
+      fnLead.WSseparaNombres({nombre: configLead.nombre, callback: enviaDatos});
+    } else {
+      configLead.nombre = $.trim(configLead.nombre.capitalize());
+      fnLead.setDatosLead(configLead);
+      fnLead.WSguardaProspecto(finEnviaDatos);
+    }
+  }; /* preparaDatos */
+
+};
+
+var leadControlador = new LeadControlador();

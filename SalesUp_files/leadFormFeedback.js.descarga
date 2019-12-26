@@ -1,0 +1,91 @@
+"use strict";
+
+/**
+* @module LeadFormFeedback
+* @author Sergio Ponce
+* @description Funciones encargadas de dar retroalimentacion al usuario
+* en el FormLead.
+*/
+
+var LeadFormFeedback = function() {
+
+  var Self = this;
+
+  this.inputSucces = function($input) {
+    var $div = $input.closest('div');
+    var $icon = $div.find( 'i.feedbackIcon' );
+    var $errorSpan = $div.find('div span');
+    $icon.removeClass('fa-times');
+    $icon.addClass('fa-check');
+    $div.removeClass('has-danger');
+    $div.addClass('has-success');
+    $errorSpan.attr('style', '');
+  }; /* inputSucces */
+
+  this.inputError = function($input) {
+    var $div = $input.closest('div');
+    var $icon = $div.find( 'i.feedbackIcon' );
+    var $errorSpan = $div.find('div span');
+    $icon.removeClass('fa-check');
+    $icon.addClass('fa-times');
+    $div.removeClass('has-success');
+    $div.addClass('has-danger');
+    $errorSpan.attr('style', 'visibility: visible;');
+  }; /* inputError */
+
+  this.inputFocus = function($input) {
+    var $div = $input.closest('div');
+    var $errorSpan = $div.find('div span');
+    $div.removeClass('has-success');
+    $div.removeClass('has-danger');
+    $errorSpan.attr('style', '');
+    $('.popupSignupErrorServer').attr('style', 'visibility:hidden;');
+  }; /* inputFocus */
+
+  this.inputOnBlur = function($input) {
+    var value = $input.val();
+    var tipo = $input.attr('data-tipo');
+    var valido = fnLead.validaCampo({ tipo: tipo, valor: value });
+    if(value != '') {
+      if(valido) {
+        Self.inputSucces($input);
+      } else {
+        Self.inputError($input);
+      }
+    }
+  }; /* inputOnBlur */
+
+  this.inicioBoton = function($boton, $form) {
+    fn.btnSpin({mensaje: 'Registrando', boton: $boton});
+  }; /* inicioBoton */
+
+  this.midBoton = function(valido, configLead, $boton, $form) {
+    if(!valido) {
+      fn.btnSpin({reset:true, boton: $boton, textoOriginal: '¡Regístrate!'});
+    } else {
+      leadControlador.guardaDatosLeadLs(configLead);
+    }
+  };  /*midBoton */
+
+  this.endBotonError = function(res, err, $boton, $form) {
+    if(err) {
+      var $div = $boton.closest('div');
+      var $serverErrorSpan = $div.find( 'span' );
+      fn.btnSpin({reset:true, boton: $boton, textoOriginal: '¡Regístrate!'});
+      $serverErrorSpan.attr('style', 'visibility:visible;');
+    }
+  }; /* endBotonError */
+
+};
+
+var leadFormFeedback = new LeadFormFeedback();
+
+(function() {
+  leadControlador.setOnSucces(leadFormFeedback.inputSucces);
+  leadControlador.setOnError(leadFormFeedback.inputError);
+  leadControlador.setOnFocus(leadFormFeedback.inputFocus);
+  leadControlador.setOnBlur(leadFormFeedback.inputOnBlur);
+  leadControlador.setBotonIni(leadFormFeedback.inicioBoton);
+  leadControlador.setBotonMid(leadFormFeedback.midBoton);
+  leadControlador.setBotonEndError(leadFormFeedback.endBotonError);
+}());

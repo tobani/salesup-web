@@ -1,0 +1,11 @@
+		var scrollAnimation = function(destino, event){
+			if(event) {
+				event.preventDefault();
+			}
+		  var $destino = $(destino);
+		  if( $destino.length ) {
+		    $('html, body').animate({
+		      scrollTop: $destino.offset().top
+		    }, 800);
+		  }
+		}

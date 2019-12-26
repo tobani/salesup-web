@@ -1,0 +1,100 @@
+var config={
+  consulta_registro:'http://control.salesup.com.mx/webservices/ValidaProspecto.dbsp',
+  ingresa_registro:'https://socrates.salesup.com.mx/guarda_prospecto.dbsp',
+  tke:'E-62B83098-11FC-4CD3-AA4A-E93DE1C72D6B', //no quitar
+  sp_version:'2', //No quitar
+};
+var frmBlogSuscribirse={};
+frmBlogSuscribirse.nombre = '.';
+frmBlogSuscribirse.etiqueta = 3085;
+frmBlogSuscribirse.origen = 3073;
+frmBlogSuscribirse.empresa = 11811;
+frmBlogSuscribirse.usuario = 64211;
+
+frmBlogSuscribirse.enviaDatos = function(e) {
+  e.preventDefault();
+  var botonSuscribirse = document.getElementById('btnSuscribirseBlog');
+  var suscripcionHTML = '<i class="fa fa-spinner fa-spin"></i> Enviando';
+  var email = document.getElementById("emailS");
+
+  if(email.value.length != 0 && /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i.test(email.value))
+  {
+    var form={
+      email:email.value,
+    };
+    botonSuscribirse.disabled = true;
+    botonSuscribirse.innerHTML = suscripcionHTML;
+    frmBlogSuscribirse.suscribirse(form);
+  }
+  else
+  {
+    if(email.value.length == 0||!(/^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i.test(email.value)))
+    {
+      botonSuscribirse.disabled = true;
+      email.style.backgroundColor="#eadcdc";
+      email.style.borderColor="#a94442";
+      $('#error_emailS').slideDown().html('<span>correo no válido</span>');
+      setTimeout(function(){$('#error_emailS').slideUp();}, 2500);
+      email.focus();
+      botonSuscribirse.disabled = false;
+    }
+  }
+}
+
+frmBlogSuscribirse.validaObligatorio = function() {
+  var arrObligatorio=$(".obligatorioSuscribirse");
+}
+
+frmBlogSuscribirse.decolorar = function(elemento){elemento.style.backgroundColor = "#ffffff";elemento.style.borderColor="#ccc";elemento.style.backgroundColor="#fff";}
+
+frmBlogSuscribirse.suscribirse = function(form) {
+  var email=form.email;
+  var nombre=frmBlogSuscribirse.nombre;
+  var origen=frmBlogSuscribirse.origen;
+  var etiqueta=frmBlogSuscribirse.etiqueta;
+  var idempresa=frmBlogSuscribirse.empresa;
+  var idusuario=frmBlogSuscribirse.usuario;
+  var comentario='#lead #footer #Suscripcionalboletin';
+  var form=
+  {
+    IDEMPRESA:idempresa,
+    NOMBRE:nombre,
+    CORREO:email,
+    IDORIGEN:origen,
+    IDETIQUETA:etiqueta,
+    IDUSUARIO:idusuario,
+    COMENTARIOS:comentario,
+    SP_VERSION:2
+  };
+  console.log(form);
+
+  var botonSuscribirse = document.getElementById('btnSuscribirseBlog');
+  var suscripcionHTML = 'Suscribir';
+
+  var request= $.ajax(
+    {
+      method: "POST",
+      url: config.ingresa_registro,
+      data: form,
+
+    });
+
+    request.done(function(res)//funcion en caso de exito
+    {
+      $("#emailS").val("");
+      $('#suscrito').slideDown().html('<span><i class="fa fa-check"></i> ¡Suscripción exitosa! </span>');
+      setTimeout(function(){$('#suscrito').slideUp();}, 2500);
+      botonSuscribirse.disabled = false;
+      botonSuscribirse.innerHTML = suscripcionHTML;
+      localStorage.setItem('email: ', email);
+    });
+
+    request.fail(function(err, textStatus)//funcion en caso de fallo
+    {
+      console.log("____________");console.log(err);//para ver que recibes en caso de error
+      console.log("____________");console.log(textStatus);//estatus de la respuesta "error" esto lo puedes omitir
+      alert("Error de envio!");
+      botonSuscribirse.disabled = false;
+      botonSuscribirse.innerHTML = suscripcionHTML;
+    });
+  }
